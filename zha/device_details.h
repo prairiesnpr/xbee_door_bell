@@ -13,7 +13,7 @@ static attribute door_attr[] = {
     {0x0055, 0x00, 1, ZCL_BOOL}, // present value
     {0x006F, 0x0, 1, ZCL_MAP8}   // Status flags
 };
-static attribute temp_attr[] = {{0x0000, 0x00, 2, ZCL_UINT16_T}};
+static attribute temp_attr[] = {{0x0000, 0x00, 2, ZCL_INT16_T}};
 static attribute humid_attr[] = {{0x0000, 0x00, 2, ZCL_UINT16_T}};
 
 static Cluster door_in_clusters[] = {
