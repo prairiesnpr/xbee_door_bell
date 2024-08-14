@@ -21,6 +21,7 @@
 #define START_LOOPS 100
 
 uint8_t start_fails = 0;
+uint8_t init_status_sent = 0;
 
 DHT_Unified dht(DHTPIN, DHTTYPE);
 
@@ -108,38 +109,43 @@ bool update_sensors(void *)
   return true;
 }
 
+void update_bell_state(bool force = 0x00)
+{
+  uint8_t val = digitalRead(DOOR_PIN) ^ 1;
+  Endpoint end_point = zha.GetEndpoint(DOOR_ENDPOINT);
+  Cluster cluster = end_point.GetCluster(BINARY_INPUT_CLUSTER_ID);
+  attribute *attr = cluster.GetAttr(BINARY_PV_ATTR);
+
+  if (val != lastButtonState)
+  {
+    lastDebounceTime = millis();
+  }
+
+  if (((millis() - lastDebounceTime) > debounceDelay) || force)
+  {
+    if (val != attr->GetIntValue() || force)
+    {
+      Serial.print(F("EP"));
+      Serial.print(end_point.id);
+      Serial.print(F(": "));
+      Serial.print(attr->GetIntValue());
+      Serial.print(F(" Now "));
+      attr->SetValue(val);
+      Serial.println(attr->GetIntValue());
+      zha.sendAttributeRpt(cluster.id, attr, end_point.id, 1);
+    }
+  }
+
+  lastButtonState = val;
+}
+
 void loop()
 {
   zha.loop();
 
   if (zha.dev_status == READY)
   {
-    uint8_t val = digitalRead(DOOR_PIN) ^ 1;
-    Endpoint end_point = zha.GetEndpoint(DOOR_ENDPOINT);
-    Cluster cluster = end_point.GetCluster(BINARY_INPUT_CLUSTER_ID);
-    attribute *attr = cluster.GetAttr(BINARY_PV_ATTR);
-
-    if (val != lastButtonState)
-    {
-      lastDebounceTime = millis();
-    }
-
-    if ((millis() - lastDebounceTime) > debounceDelay)
-    {
-      if (val != attr->GetIntValue())
-      {
-        Serial.print(F("EP"));
-        Serial.print(end_point.id);
-        Serial.print(F(": "));
-        Serial.print(attr->GetIntValue());
-        Serial.print(F(" Now "));
-        attr->SetValue(val);
-        Serial.println(attr->GetIntValue());
-        zha.sendAttributeRpt(cluster.id, attr, end_point.id, 1);
-      }
-    }
-
-    lastButtonState = val;
+    update_bell_state();
   }
   else if ((loop_time - last_msg_time) > 1000)
   {
@@ -149,6 +155,11 @@ void loop()
     Serial.println(START_LOOPS);
 
     last_msg_time = millis();
+    if (start_fails > 15)
+    {
+      // Sometimes we don't get a response from dev ann, try a transmit and see if we are good
+      update_bell_state(0x01);
+    }
     if (start_fails > START_LOOPS)
     {
       resetFunc();
