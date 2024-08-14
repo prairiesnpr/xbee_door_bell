@@ -7,9 +7,8 @@ constexpr uint8_t one_max_byte[] = {0xFF};
 constexpr uint8_t two_zero_byte[] = {0x00, 0x00};
 constexpr uint8_t four_zero_byte[] = {0x00, 0x00, 0x00, 0x00};
 
-
 // Reuse these to save SRAM
-constexpr char manufacturer[]  = "iSilentLLC";
+constexpr char manufacturer[] = "iSilentLLC";
 constexpr char doorbell_model[] = "Doorbell";
 constexpr char temp_model[] = "Temp & Humidity";
 
@@ -26,18 +25,18 @@ attribute temp_model_attr = BuildStringAtt(MODEL_ATTR, const_cast<char *>(temp_m
 attribute door_basic_attr[]{
     manuf_attr,
     doorbell_model_attr};
-    
+
 attribute temp_basic_attr[]{
     manuf_attr,
     temp_model_attr};
 
 attribute door_attr[] = {
-    {BINARY_PV_ATTR, 0x00, 1, ZCL_BOOL},  // present value
-    {BINARY_STATUS_FLG, 0x0, 1, ZCL_MAP8} // Status flags
+    {BINARY_PV_ATTR, const_cast<uint8_t *>(one_zero_byte), 1, ZCL_BOOL},   // present value
+    {BINARY_STATUS_FLG, const_cast<uint8_t *>(one_zero_byte), 1, ZCL_MAP8} // Status flags
 };
 
-static attribute temp_attr[] = {{CURRENT_STATE, 0x00, 2, ZCL_INT16_T}};
-static attribute humid_attr[] = {{CURRENT_STATE, 0x00, 2, ZCL_UINT16_T}};
+static attribute temp_attr[] = {{CURRENT_STATE, const_cast<uint8_t *>(two_zero_byte), 2, ZCL_INT16_T}};
+static attribute humid_attr[] = {{CURRENT_STATE, const_cast<uint8_t *>(two_zero_byte), 2, ZCL_UINT16_T}};
 
 static Cluster door_in_clusters[] = {
     Cluster(BASIC_CLUSTER_ID, door_basic_attr, sizeof(door_basic_attr) / sizeof(*door_basic_attr)),
