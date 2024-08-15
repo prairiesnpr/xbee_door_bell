@@ -76,7 +76,8 @@ void update_temp()
       Serial.print(event.temperature);
       Serial.println(F("°C"));
       Cluster t_cluster = end_point.GetCluster(TEMP_CLUSTER_ID);
-      attribute *t_attr = t_cluster.GetAttr(CURRENT_STATE);
+      attribute *t_attr;
+      uint8_t attr_exists = t_cluster.GetAttr(&t_attr, CURRENT_STATE);
       int16_t cor_t = (int16_t)(event.temperature * 100.0);
       t_attr->SetValue(cor_t);
       Serial.print((int16_t)t_attr->GetIntValue());
@@ -95,7 +96,8 @@ void update_temp()
       Serial.print(event.relative_humidity);
       Serial.println(F("%"));
       Cluster h_cluster = end_point.GetCluster(HUMIDITY_CLUSTER_ID);
-      attribute *h_attr = h_cluster.GetAttr(CURRENT_STATE);
+      attribute *h_attr;
+      uint8_t attr_exists = h_cluster.GetAttr(&h_attr, CURRENT_STATE);
       uint16_t cor_h = (uint16_t)(event.relative_humidity * 100.0);
       h_attr->SetValue(cor_h);
       zha.sendAttributeRpt(h_cluster.id, h_attr, end_point.id, 1);
@@ -114,7 +116,8 @@ void update_bell_state(bool force = 0x00)
   uint8_t val = digitalRead(DOOR_PIN) ^ 1;
   Endpoint end_point = zha.GetEndpoint(DOOR_ENDPOINT);
   Cluster cluster = end_point.GetCluster(BINARY_INPUT_CLUSTER_ID);
-  attribute *attr = cluster.GetAttr(BINARY_PV_ATTR);
+  attribute *attr;
+  uint8_t attr_exists = cluster.GetAttr(&attr, BINARY_PV_ATTR);
 
   if (val != lastButtonState)
   {
