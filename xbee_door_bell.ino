@@ -34,7 +34,7 @@ unsigned long last_msg_time = loop_time - 1000;
 
 bool lastButtonState = 0;
 unsigned long lastDebounceTime = 0;
-unsigned long debounceDelay = 6;
+unsigned long debounceDelay = 3;
 
 SoftwareSerial nss(ssRX, ssTX);
 
@@ -44,7 +44,7 @@ void setup()
 
   pinMode(DOOR_PIN, INPUT_PULLUP);
 
-  Serial.begin(9600);
+  Serial.begin(115200);
   Serial.println(F("Startup"));
   dht.begin();
   nss.begin(9600);
@@ -123,15 +123,15 @@ void update_bell_state(bool force = 0x00)
 
   if (((millis() - lastDebounceTime) > debounceDelay) || force)
   {
-    if (val != attr->GetIntValue() || force)
+    if ((val != (uint8_t)attr->GetIntValue(0x00)) || force)
     {
       Serial.print(F("EP"));
       Serial.print(end_point.id);
       Serial.print(F(": "));
-      Serial.print(attr->GetIntValue());
+      Serial.print(attr->GetIntValue(0x00));
       Serial.print(F(" Now "));
       attr->SetValue(val);
-      Serial.println(attr->GetIntValue());
+      Serial.println(attr->GetIntValue(0x00));
       zha.sendAttributeRpt(cluster.id, attr, end_point.id, 1);
     }
   }
@@ -147,26 +147,28 @@ void loop()
   {
     update_bell_state();
   }
-  else if ((loop_time - last_msg_time) > 1000)
+  else
   {
-    Serial.print(F("Not Started "));
-    Serial.print(start_fails);
-    Serial.print(F(" of "));
-    Serial.println(START_LOOPS);
+    if ((loop_time - last_msg_time) > 1000)
+    {
+      Serial.print(F("Not Started "));
+      Serial.print(start_fails);
+      Serial.print(F(" of "));
+      Serial.println(START_LOOPS);
 
-    last_msg_time = millis();
-    if (start_fails > 15)
-    {
-      // Sometimes we don't get a response from dev ann, try a transmit and see if we are good
-      update_bell_state(0x01);
+      last_msg_time = millis();
+      if (start_fails > 15)
+      {
+        // Sometimes we don't get a response from dev ann, try a transmit and see if we are good
+        update_bell_state(0x01);
+      }
+      if (start_fails > START_LOOPS)
+      {
+        resetFunc();
+      }
+      start_fails++;
     }
-    if (start_fails > START_LOOPS)
-    {
-      resetFunc();
-    }
-    start_fails++;
   }
-
   timer.tick();
   wdt_reset();
   loop_time = millis();
